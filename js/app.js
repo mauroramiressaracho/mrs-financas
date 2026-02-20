@@ -25,6 +25,7 @@ import { initRouter, navigate } from './router.js';
 import {
   downloadCsv,
   formatCurrency,
+  formatDate,
   monthLabel,
   populateSelect,
   renderAccountsTable,
@@ -43,6 +44,15 @@ import {
 
 window.__APP_BOOTED__ = true;
 
+const DEFAULT_LANCAMENTOS_FILTERS = Object.freeze({
+  dateFrom: '',
+  dateTo: '',
+  type: '',
+  description: '',
+  categoryId: '',
+  accountId: '',
+});
+
 const state = {
   user: null,
   role: null,
@@ -56,6 +66,7 @@ const state = {
   categories: [],
   transactions: [],
   users: [],
+  lancamentosFilters: { ...DEFAULT_LANCAMENTOS_FILTERS },
 };
 
 const dashboard = createDashboard();
@@ -65,7 +76,7 @@ const accountModal = new bootstrap.Modal(document.getElementById('accountModal')
 const userModal = new bootstrap.Modal(document.getElementById('userModal'));
 
 const monthRoutes = new Set(['dashboard', 'lancamentos', 'relatorios']);
-const searchRoutes = new Set(['dashboard', 'lancamentos']);
+const searchRoutes = new Set(['dashboard']);
 const newTxRoutes = new Set(['dashboard', 'lancamentos']);
 const exportRoutes = new Set(['dashboard', 'lancamentos', 'relatorios']);
 const adminOnlyRoutes = new Set(['dashboard', 'categorias', 'contas', 'usuarios', 'relatorios', 'config']);
@@ -184,15 +195,82 @@ function shiftMonth(offset) {
 }
 
 function currentFilteredTransactions() {
-  if (!state.search.trim()) return [...state.transactions];
+  let rows = [...state.transactions];
 
-  const token = state.search.trim().toLowerCase();
-  return state.transactions.filter((item) =>
-    item.description.toLowerCase().includes(token)
-      || item.category_name.toLowerCase().includes(token)
-      || item.account_name.toLowerCase().includes(token)
-      || item.type.toLowerCase().includes(token)
-  );
+  if (state.search.trim()) {
+    const token = state.search.trim().toLowerCase();
+    rows = rows.filter((item) =>
+      item.description.toLowerCase().includes(token)
+        || item.category_name.toLowerCase().includes(token)
+        || item.account_name.toLowerCase().includes(token)
+        || item.type.toLowerCase().includes(token)
+    );
+  }
+
+  if (state.route === 'lancamentos') {
+    const f = state.lancamentosFilters;
+
+    if (f.dateFrom) {
+      rows = rows.filter((item) => item.dt >= f.dateFrom);
+    }
+
+    if (f.dateTo) {
+      rows = rows.filter((item) => item.dt <= f.dateTo);
+    }
+
+    if (f.type) {
+      rows = rows.filter((item) => item.type === f.type);
+    }
+
+    if (f.description) {
+      const descriptionToken = f.description.toLowerCase();
+      rows = rows.filter((item) => item.description.toLowerCase().includes(descriptionToken));
+    }
+
+    if (f.categoryId) {
+      rows = rows.filter((item) => (item.category_id || '') === f.categoryId);
+    }
+
+    if (f.accountId) {
+      rows = rows.filter((item) => (item.account_id || '') === f.accountId);
+    }
+  }
+
+  return rows;
+}
+
+function syncLancamentosFiltersFromUi() {
+  state.lancamentosFilters = {
+    dateFrom: document.getElementById('lancFilterDateFrom')?.value || '',
+    dateTo: document.getElementById('lancFilterDateTo')?.value || '',
+    type: document.getElementById('lancFilterType')?.value || '',
+    description: document.getElementById('lancFilterDesc')?.value.trim() || '',
+    categoryId: document.getElementById('lancFilterCategory')?.value || '',
+    accountId: document.getElementById('lancFilterAccount')?.value || '',
+  };
+}
+
+function applyLancamentosFiltersToUi() {
+  const f = state.lancamentosFilters;
+  const from = document.getElementById('lancFilterDateFrom');
+  const to = document.getElementById('lancFilterDateTo');
+  const type = document.getElementById('lancFilterType');
+  const desc = document.getElementById('lancFilterDesc');
+  const category = document.getElementById('lancFilterCategory');
+  const account = document.getElementById('lancFilterAccount');
+
+  if (from) from.value = f.dateFrom;
+  if (to) to.value = f.dateTo;
+  if (type) type.value = f.type;
+  if (desc) desc.value = f.description;
+  if (category) category.value = f.categoryId;
+  if (account) account.value = f.accountId;
+}
+
+function refreshLancamentosFilterSelects() {
+  populateSelect('lancFilterCategory', state.categories, 'Todas categorias');
+  populateSelect('lancFilterAccount', state.accounts, 'Todos meios');
+  applyLancamentosFiltersToUi();
 }
 
 function sortByDateDesc(rows) {
@@ -298,6 +376,7 @@ function refreshViewData() {
 function refreshLookupSelects() {
   populateSelect('campoCategoria', state.categories, 'Sem categoria');
   populateSelect('campoConta', state.accounts, 'Sem conta');
+  refreshLancamentosFilterSelects();
 }
 
 async function refreshAccounts() {
@@ -691,20 +770,24 @@ async function seedCategories() {
 
 function exportCurrentCsv() {
   const rows = sortByDateDesc(currentFilteredTransactions());
+  const usersMap = new Map((state.users || []).map((row) => [row.user_id, row.email]));
+  const currentEmail = state.user?.email || '';
+  const resolveUserEmail = (userId) => usersMap.get(userId) || (userId === state.user?.id ? currentEmail : '');
 
   downloadCsv(
     `lancamentos-${state.monthKey}.csv`,
     ['Data', 'Tipo', 'Descricao', 'Categoria', 'Meio', 'Valor', 'Observacao', 'Usuario'],
     rows.map((item) => [
-      item.dt,
-      item.type,
+      formatDate(item.dt),
+      item.type === 'receita' ? 'Receita' : 'Despesa',
       item.description,
       item.category_name,
       item.account_name,
-      item.amount.toFixed(2),
+      item.amount.toFixed(2).replace('.', ','),
       item.note || '',
-      item.user_id,
-    ])
+      resolveUserEmail(item.user_id) || '',
+    ]),
+    { delimiter: ';', includeBom: true }
   );
 
   showToast('CSV exportado com sucesso.');
@@ -819,6 +902,26 @@ function bindUiEvents() {
     state.currentPage += 1;
     refreshViewData();
   });
+
+  const lancFilterChange = () => {
+    syncLancamentosFiltersFromUi();
+    state.currentPage = 1;
+    refreshViewData();
+  };
+
+  document.getElementById('lancFilterDateFrom').addEventListener('change', lancFilterChange);
+  document.getElementById('lancFilterDateTo').addEventListener('change', lancFilterChange);
+  document.getElementById('lancFilterType').addEventListener('change', lancFilterChange);
+  document.getElementById('lancFilterCategory').addEventListener('change', lancFilterChange);
+  document.getElementById('lancFilterAccount').addEventListener('change', lancFilterChange);
+  document.getElementById('lancFilterDesc').addEventListener('input', lancFilterChange);
+  document.getElementById('lancFilterClear').addEventListener('click', () => {
+    state.lancamentosFilters = { ...DEFAULT_LANCAMENTOS_FILTERS };
+    applyLancamentosFiltersToUi();
+    state.currentPage = 1;
+    refreshViewData();
+  });
+  document.getElementById('lancExportBtn').addEventListener('click', exportCurrentCsv);
 
   document.getElementById('btnNovoLancamento').addEventListener('click', () => openTransactionModal());
   document.getElementById('btnNovoLancamentoLista').addEventListener('click', () => openTransactionModal());

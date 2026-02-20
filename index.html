@@ -125,7 +125,7 @@
               <div class="card stat-card kpi-card">
                 <div class="kpi-icon kpi-icon-red"><i class="bi bi-hand-thumbs-down"></i></div>
                 <div class="kpi-content">
-                  <span class="kpi-title">% Cartão / despesas</span>
+                  <span class="kpi-title">% Despesas / receitas</span>
                   <h3 class="fw-bold mb-0" id="kpiCartao">0,0%</h3>
                 </div>
               </div>
@@ -206,6 +206,41 @@
               <div class="col-6 col-lg-3">
                 <div class="small text-secondary">Saldo</div>
                 <div class="fw-semibold" id="lancamentosTotalBalance">R$ 0,00</div>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3" id="lancamentosFilters">
+              <div class="col-6 col-xl-2">
+                <label for="lancFilterDateFrom" class="form-label form-label-sm small text-secondary mb-1">Data inicial</label>
+                <input type="date" id="lancFilterDateFrom" class="form-control form-control-sm">
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="lancFilterDateTo" class="form-label form-label-sm small text-secondary mb-1">Data final</label>
+                <input type="date" id="lancFilterDateTo" class="form-control form-control-sm">
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="lancFilterType" class="form-label form-label-sm small text-secondary mb-1">Tipo</label>
+                <select id="lancFilterType" class="form-select form-select-sm">
+                  <option value="">Todos</option>
+                  <option value="receita">Receita</option>
+                  <option value="despesa">Despesa</option>
+                </select>
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="lancFilterCategory" class="form-label form-label-sm small text-secondary mb-1">Categoria</label>
+                <select id="lancFilterCategory" class="form-select form-select-sm"></select>
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="lancFilterAccount" class="form-label form-label-sm small text-secondary mb-1">Meio</label>
+                <select id="lancFilterAccount" class="form-select form-select-sm"></select>
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="lancFilterDesc" class="form-label form-label-sm small text-secondary mb-1">Descrição</label>
+                <input type="text" id="lancFilterDesc" class="form-control form-control-sm" placeholder="Filtrar descrição">
+              </div>
+              <div class="col-12 d-flex justify-content-end gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="lancFilterClear"><i class="bi bi-x-circle"></i> Limpar filtros</button>
+                <button class="btn btn-outline-secondary btn-sm" id="lancExportBtn"><i class="bi bi-download"></i> Exportar CSV</button>
               </div>
             </div>
 

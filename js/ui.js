@@ -269,14 +269,20 @@ export function renderReportTable(bodyId, entries) {
     .join('');
 }
 
-export function downloadCsv(filename, headers, rows) {
-  const csvHeaders = headers.join(',');
-  const csvRows = rows.map((row) =>
-    row.map((value) => `"${String(value ?? '').replaceAll('"', '""')}"`).join(',')
-  );
+function toCsvCell(value) {
+  return `"${String(value ?? '').replaceAll('\r\n', ' ').replaceAll('\n', ' ').replaceAll('"', '""')}"`;
+}
 
-  const csv = [csvHeaders, ...csvRows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+export function downloadCsv(filename, headers, rows, options = {}) {
+  const delimiter = options.delimiter || ';';
+  const includeBom = options.includeBom !== false;
+
+  const csvHeaders = headers.map((item) => toCsvCell(item)).join(delimiter);
+  const csvRows = rows.map((row) => row.map((value) => toCsvCell(value)).join(delimiter));
+
+  const csv = [csvHeaders, ...csvRows].join('\r\n');
+  const content = includeBom ? `\uFEFF${csv}` : csv;
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = filename;

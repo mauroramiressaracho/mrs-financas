@@ -121,16 +121,12 @@ export function createDashboard() {
 
     const saldo = receitas - despesas;
 
-    const cartaoDespesas = transactions
-      .filter((item) => item.type === 'despesa' && item.account_kind === 'cartao')
-      .reduce((sum, item) => sum + item.amount, 0);
-
-    const percCartao = despesas > 0 ? ((cartaoDespesas / despesas) * 100).toFixed(1) : '0.0';
+    const percDespesasReceitas = receitas > 0 ? ((despesas / receitas) * 100).toFixed(1) : '0.0';
 
     kpiSaldo.textContent = toMoney(saldo);
     kpiReceitas.textContent = toMoney(receitas);
     kpiDespesas.textContent = toMoney(despesas);
-    kpiCartao.textContent = `${percCartao}%`;
+    kpiCartao.textContent = `${percDespesasReceitas}%`;
 
     kpiSaldo.className = `fw-bold mb-0 ${saldo >= 0 ? 'value-positive' : 'value-negative'}`;
     kpiReceitas.className = 'fw-bold mb-0 value-positive';
