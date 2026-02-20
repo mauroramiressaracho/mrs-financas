@@ -153,16 +153,6 @@ body.dark .auth-shell {
   color: rgba(230, 238, 248, 0.8) !important;
 }
 
-.sidebar-header-search .form-control {
-  background: rgba(255, 255, 255, 0.11);
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #f3f9ff;
-}
-
-.sidebar-header-search .form-control::placeholder {
-  color: rgba(230, 238, 248, 0.75);
-}
-
 .main-content {
   flex: 1;
   min-width: 0;
