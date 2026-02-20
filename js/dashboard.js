@@ -14,6 +14,8 @@ function toMoney(value) {
   return currency.format(Number(value) || 0);
 }
 
+const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
 function byExpense(items) {
   return items.filter((item) => item.type === 'despesa');
 }
@@ -27,6 +29,7 @@ export function createDashboard() {
   const donutCtx = document.getElementById('chartDonut');
   const lineCtx = document.getElementById('chartLinha');
   const barCtx = document.getElementById('chartBarras');
+  const annualLineCtx = document.getElementById('chartLinhaAnual');
 
   const chartDonut = new Chart(donutCtx, {
     type: 'doughnut',
@@ -92,6 +95,49 @@ export function createDashboard() {
     },
   });
 
+  const chartLinhaAnual = annualLineCtx ? new Chart(annualLineCtx, {
+    type: 'line',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        {
+          label: 'Receitas',
+          data: Array(12).fill(0),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.12)',
+          borderWidth: 3,
+          tension: 0.25,
+          fill: false,
+          pointRadius: 3,
+        },
+        {
+          label: 'Despesas',
+          data: Array(12).fill(0),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.12)',
+          borderWidth: 3,
+          tension: 0.25,
+          fill: false,
+          pointRadius: 3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: '#64748b' },
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } },
+        y: { ticks: { color: '#64748b' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  }) : null;
+
   function applyTheme() {
     const tickColor = cssVar('--text-secondary', '#64748b');
     const gridColor = cssVar('--chart-grid', '#e2e8f0');
@@ -106,11 +152,20 @@ export function createDashboard() {
     chartBarras.options.scales.y.ticks.color = tickColor;
     chartBarras.options.scales.y.grid.color = gridColor;
 
+    if (chartLinhaAnual) {
+      chartLinhaAnual.options.scales.x.ticks.color = tickColor;
+      chartLinhaAnual.options.scales.x.grid.color = gridColor;
+      chartLinhaAnual.options.scales.y.ticks.color = tickColor;
+      chartLinhaAnual.options.scales.y.grid.color = gridColor;
+      chartLinhaAnual.options.plugins.legend.labels.color = tickColor;
+      chartLinhaAnual.update();
+    }
+
     chartLinha.update();
     chartBarras.update();
   }
 
-  function render(transactions, monthKey) {
+  function render(transactions, monthKey, yearTransactions = []) {
     const receitas = transactions
       .filter((item) => item.type === 'receita')
       .reduce((sum, item) => sum + item.amount, 0);
@@ -171,6 +226,23 @@ export function createDashboard() {
     chartBarras.data.labels = accountEntries.map((entry) => entry[0]);
     chartBarras.data.datasets[0].data = accountEntries.map((entry) => Number(entry[1].toFixed(2)));
     chartBarras.update();
+
+    if (chartLinhaAnual) {
+      const receitasPorMes = Array(12).fill(0);
+      const despesasPorMes = Array(12).fill(0);
+
+      yearTransactions.forEach((item) => {
+        const monthIndex = Number(item.dt?.slice(5, 7)) - 1;
+        if (monthIndex < 0 || monthIndex > 11) return;
+
+        if (item.type === 'receita') receitasPorMes[monthIndex] += item.amount;
+        if (item.type === 'despesa') despesasPorMes[monthIndex] += item.amount;
+      });
+
+      chartLinhaAnual.data.datasets[0].data = receitasPorMes.map((value) => Number(value.toFixed(2)));
+      chartLinhaAnual.data.datasets[1].data = despesasPorMes.map((value) => Number(value.toFixed(2)));
+      chartLinhaAnual.update();
+    }
   }
 
   applyTheme();

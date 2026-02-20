@@ -14,6 +14,7 @@ import {
   listAccounts,
   listCategories,
   listTransactionsByMonth,
+  listTransactionsByYear,
   listUsers,
   updateAccount,
   updateCategory,
@@ -65,6 +66,7 @@ const state = {
   accounts: [],
   categories: [],
   transactions: [],
+  transactionsYear: [],
   users: [],
   lancamentosFilters: { ...DEFAULT_LANCAMENTOS_FILTERS },
 };
@@ -369,7 +371,7 @@ function refreshViewData() {
   renderTransactionsTable('dashboardTransactionsBody', sortedDesc.slice(0, 10), true);
   updateLancamentosTotals(sortedDesc);
   updateLancamentosPaginationUi(pagination);
-  dashboard.render(filtered, state.monthKey);
+  dashboard.render(filtered, state.monthKey, state.transactionsYear);
   updateReports(filtered);
 }
 
@@ -402,7 +404,12 @@ async function refreshTransactions() {
 
   try {
     setLoading(true);
-    state.transactions = await listTransactionsByMonth(state.monthKey);
+    const [monthRows, yearRows] = await Promise.all([
+      listTransactionsByMonth(state.monthKey),
+      listTransactionsByYear(state.monthKey),
+    ]);
+    state.transactions = monthRows;
+    state.transactionsYear = yearRows;
     refreshViewData();
   } catch (error) {
     showToast(error.message || 'Erro ao carregar lançamentos.', 'error');
@@ -417,7 +424,12 @@ async function loadAppData() {
   try {
     setLoading(true);
     await Promise.all([refreshAccounts(), refreshCategories(), refreshUsers()]);
-    state.transactions = await listTransactionsByMonth(state.monthKey);
+    const [monthRows, yearRows] = await Promise.all([
+      listTransactionsByMonth(state.monthKey),
+      listTransactionsByYear(state.monthKey),
+    ]);
+    state.transactions = monthRows;
+    state.transactionsYear = yearRows;
     refreshViewData();
   } catch (error) {
     showToast(error.message || 'Erro ao carregar dados.', 'error');
@@ -800,6 +812,7 @@ async function processUser(user) {
     state.accounts = [];
     state.categories = [];
     state.transactions = [];
+    state.transactionsYear = [];
     state.users = [];
     state.currentPage = 1;
     setUserIdentity('-', '-');

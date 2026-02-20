@@ -36,9 +36,53 @@ function monthRange(monthKey) {
   };
 }
 
+function yearRange(monthKey) {
+  const [year] = monthKey.split('-').map(Number);
+  return {
+    start: `${year}-01-01`,
+    end: `${year}-12-31`,
+  };
+}
+
 function normalizeRelation(value) {
   if (!value) return null;
   return Array.isArray(value) ? value[0] ?? null : value;
+}
+
+function mapTransactionRows(data) {
+  return (data ?? []).map((row) => {
+    const category = normalizeRelation(row.categories);
+    const account = normalizeRelation(row.accounts);
+
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      dt: row.dt,
+      type: row.type,
+      amount: Number(row.amount ?? 0),
+      description: row.description,
+      note: row.note ?? '',
+      category_id: row.category_id,
+      account_id: row.account_id,
+      category_name: category?.name ?? 'Sem categoria',
+      account_name: account?.name ?? 'Sem conta',
+      account_kind: account?.kind ?? 'outros',
+    };
+  });
+}
+
+async function listTransactionsBetween(start, end) {
+  ensureClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('id,user_id,dt,type,amount,description,note,category_id,account_id,categories(name),accounts(name,kind)')
+    .gte('dt', start)
+    .lte('dt', end)
+    .order('dt', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return mapTransactionRows(data);
 }
 
 export async function getMyProfile(userId) {
@@ -214,38 +258,13 @@ export async function createDefaultCategories(userId) {
 }
 
 export async function listTransactionsByMonth(monthKey) {
-  ensureClient();
   const { start, end } = monthRange(monthKey);
+  return listTransactionsBetween(start, end);
+}
 
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('id,user_id,dt,type,amount,description,note,category_id,account_id,categories(name),accounts(name,kind)')
-    .gte('dt', start)
-    .lte('dt', end)
-    .order('dt', { ascending: true })
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-
-  return (data ?? []).map((row) => {
-    const category = normalizeRelation(row.categories);
-    const account = normalizeRelation(row.accounts);
-
-    return {
-      id: row.id,
-      user_id: row.user_id,
-      dt: row.dt,
-      type: row.type,
-      amount: Number(row.amount ?? 0),
-      description: row.description,
-      note: row.note ?? '',
-      category_id: row.category_id,
-      account_id: row.account_id,
-      category_name: category?.name ?? 'Sem categoria',
-      account_name: account?.name ?? 'Sem conta',
-      account_kind: account?.kind ?? 'outros',
-    };
-  });
+export async function listTransactionsByYear(monthKey) {
+  const { start, end } = yearRange(monthKey);
+  return listTransactionsBetween(start, end);
 }
 
 export async function createTransaction(userId, payload) {
