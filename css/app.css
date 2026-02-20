@@ -610,6 +610,7 @@ body.dark .auth-shell {
 
   .kpi-card {
     gap: 0.65rem;
+    min-height: 130px;
   }
 
   .kpi-icon {
@@ -618,8 +619,16 @@ body.dark .auth-shell {
     font-size: 1.28rem;
   }
 
+  .kpi-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 64px;
+  }
+
   .kpi-title {
     font-size: 0.82rem;
+    min-height: 2.2em;
   }
 
   #kpiSaldo,
