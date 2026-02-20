@@ -1,0 +1,700 @@
+﻿* {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+:root {
+  --bg-body: #eceff3;
+  --card-bg: #ffffff;
+  --text-primary: #2f4052;
+  --text-secondary: #6d7d8c;
+  --title-color: #4f5d6c;
+  --kpi-title-color: #7b8794;
+  --table-head-color: #4f5f71;
+  --table-body-color: #2f4052;
+  --table-hover-bg: #f7f9fc;
+  --outline-btn-bg: #ffffff;
+  --outline-btn-text: #5f6b79;
+  --outline-btn-hover-bg: #f2f5f8;
+  --outline-btn-hover-text: #384656;
+  --control-text: #5f6b79;
+  --control-text-disabled: #6f7f8d;
+  --border-light: #d4dbe3;
+  --control-bg: #f7f9fb;
+  --control-bg-hover: #edf2f6;
+  --control-border: #c8d1db;
+  --shadow-sm: 0 3px 9px rgba(0, 0, 0, 0.08);
+  --sidebar-bg: linear-gradient(180deg, #1f4f88 0%, #173f72 56%, #0f2f58 100%);
+  --topbar-bg: #f6f7f9;
+  --chart-grid: #d9e2ec;
+  --income: #10b981;
+  --expense: #ef4444;
+  --muted-bg: #eef2f6;
+}
+
+body.dark {
+  --bg-body: #0b1120;
+  --card-bg: #1e293b;
+  --text-primary: #e8f0ff;
+  --text-secondary: #b8c9de;
+  --title-color: #d8e4f6;
+  --kpi-title-color: #b3c4db;
+  --table-head-color: #c6d3e6;
+  --table-body-color: #e8f0ff;
+  --table-hover-bg: #26384e;
+  --outline-btn-bg: #1a2b41;
+  --outline-btn-text: #dbe7f8;
+  --outline-btn-hover-bg: #253852;
+  --outline-btn-hover-text: #f5f9ff;
+  --control-text: #d4e1f2;
+  --control-text-disabled: #b8c9de;
+  --border-light: #334155;
+  --control-bg: #18263a;
+  --control-bg-hover: #223249;
+  --control-border: #3a4e68;
+  --shadow-sm: 0 8px 24px -10px rgba(0, 0, 0, 0.45);
+  --sidebar-bg: #111827;
+  --topbar-bg: #162036ee;
+  --chart-grid: #2a3648;
+  --muted-bg: #273449;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+main {
+  max-width: 100%;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: radial-gradient(circle at 20% 10%, #eff6ff 0%, #f8fafc 45%, #e2e8f0 100%);
+}
+
+body.dark .auth-shell {
+  background: radial-gradient(circle at 20% 10%, #1d2940 0%, #101a2d 45%, #0b1120 100%);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 520px;
+  border: none;
+  border-radius: 24px;
+  box-shadow: var(--shadow-sm);
+  background: var(--card-bg);
+}
+
+.nav-pills .nav-link {
+  color: var(--text-secondary);
+}
+
+.nav-pills .nav-link.active {
+  background: #2563eb;
+}
+
+.sidebar {
+  width: 245px;
+  background: var(--sidebar-bg);
+  border-right: none;
+  transition: width 0.2s ease, transform 0.2s ease;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  z-index: 1050;
+  color: #eff6ff;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.16));
+  pointer-events: none;
+}
+
+.sidebar.collapsed {
+  width: 84px;
+}
+
+.sidebar.collapsed .sidebar-text {
+  display: none;
+}
+
+.sidebar > .d-flex {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar .text-secondary {
+  color: rgba(230, 238, 248, 0.8) !important;
+}
+
+.sidebar-header-search .form-control {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #f3f9ff;
+}
+
+.sidebar-header-search .form-control::placeholder {
+  color: rgba(230, 238, 248, 0.75);
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-body);
+}
+
+.top-bar {
+  background: var(--topbar-bg);
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--border-light);
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.page-title {
+  color: var(--title-color);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+#topActions .btn,
+#topActions .badge {
+  white-space: nowrap;
+}
+
+#userEmailTop {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card {
+  padding: 0.9rem;
+}
+
+.nav-link-app {
+  color: rgba(235, 243, 253, 0.95);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 6px;
+  padding: 0.62rem 0.75rem;
+}
+
+.nav-link-app:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.nav-link-app.active {
+  color: #ffffff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+#globalSearch,
+.form-control,
+.form-select {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
+}
+
+.btn-outline-secondary {
+  border-color: var(--border-light);
+  color: var(--outline-btn-text);
+  background: var(--outline-btn-bg);
+}
+
+.btn-outline-secondary:hover {
+  border-color: var(--border-light);
+  background: var(--outline-btn-hover-bg);
+  color: var(--outline-btn-hover-text);
+}
+
+#monthSelector .btn {
+  background: var(--control-bg);
+  border-color: var(--control-border);
+  color: var(--control-text);
+  font-weight: 500;
+}
+
+#monthSelector.btn-group > .btn {
+  flex: 0 0 auto;
+}
+
+#monthSelector #prevMonth,
+#monthSelector #nextMonth {
+  width: 42px;
+  min-width: 42px;
+  padding-inline: 0;
+}
+
+#monthSelector .btn:hover:not(.disabled):not(:disabled) {
+  background: var(--control-bg-hover);
+  border-color: var(--control-border);
+  color: var(--text-primary);
+}
+
+#monthSelector .btn:focus-visible {
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.22);
+}
+
+#monthSelector .btn.disabled,
+#monthSelector .btn:disabled {
+  opacity: 1 !important;
+  background: var(--control-bg);
+  border-color: var(--control-border);
+  color: var(--control-text-disabled);
+}
+
+#currentMonth {
+  opacity: 1 !important;
+  background: var(--control-bg);
+  border-color: var(--control-border);
+  color: var(--text-primary);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto !important;
+  min-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-custom {
+  color: var(--table-body-color);
+  --bs-table-color: var(--table-body-color);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--border-light);
+  --bs-table-hover-bg: var(--table-hover-bg);
+  --bs-table-hover-color: var(--table-body-color);
+  --bs-table-striped-bg: transparent;
+  --bs-table-striped-color: var(--table-body-color);
+}
+
+.table-custom > :not(caption) > * > * {
+  background-color: transparent;
+  border-color: var(--border-light);
+  color: var(--table-body-color);
+}
+
+.table-custom thead th {
+  color: var(--table-head-color);
+  font-weight: 600;
+}
+
+.table-custom tbody tr:hover {
+  background: var(--table-hover-bg);
+}
+
+.table-custom tbody td,
+.table-custom tbody th {
+  color: var(--table-body-color) !important;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+}
+
+.kpi-content {
+  min-width: 0;
+}
+
+.kpi-title {
+  display: block;
+  color: var(--kpi-title-color);
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.kpi-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.16);
+  flex-shrink: 0;
+}
+
+.kpi-icon-green { background: #0ea85f; }
+.kpi-icon-blue { background: #3d95c5; }
+.kpi-icon-orange { background: #f2a20d; }
+.kpi-icon-red { background: #ea4c36; }
+
+#kpiSaldo,
+#kpiReceitas,
+#kpiDespesas,
+#kpiCartao {
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 500 !important;
+}
+
+#lancamentosTotals {
+  border: 1px solid var(--border-light);
+  border-radius: 7px;
+  padding: 0.6rem;
+  background: color-mix(in srgb, var(--card-bg) 86%, var(--muted-bg) 14%);
+}
+
+#lancamentosPageInfo {
+  min-width: 128px;
+  text-align: center;
+}
+
+.value-positive {
+  color: var(--income);
+  font-weight: 700;
+}
+
+.value-negative {
+  color: var(--expense);
+  font-weight: 700;
+}
+
+.badge-income {
+  background: color-mix(in srgb, var(--income) 18%, transparent);
+  color: var(--income);
+  font-weight: 600;
+}
+
+.badge-expense {
+  background: color-mix(in srgb, var(--expense) 15%, transparent);
+  color: var(--expense);
+  font-weight: 600;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.chart-container-md {
+  height: 320px;
+}
+
+.chart-container-sm {
+  height: 260px;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(1px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.toast-container {
+  z-index: 2100;
+}
+
+.modal-content {
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .top-bar {
+    gap: 0.6rem !important;
+    padding: 0.75rem 0.85rem;
+  }
+
+  #searchWrap {
+    max-width: 260px !important;
+  }
+
+  #topActions {
+    gap: 0.45rem !important;
+  }
+
+  #topActions .btn,
+  #topActions .badge {
+    font-size: 0.78rem;
+  }
+
+  .table-custom {
+    font-size: 0.92rem;
+  }
+
+  .table-custom th,
+  .table-custom td {
+    white-space: nowrap;
+  }
+
+  .modal-dialog {
+    margin: 0.75rem;
+  }
+
+  .kpi-icon {
+    width: 62px;
+    height: 62px;
+    font-size: 1.6rem;
+  }
+
+  #kpiSaldo,
+  #kpiReceitas,
+  #kpiDespesas,
+  #kpiCartao {
+    font-size: 1.55rem;
+  }
+
+  .chart-container-md {
+    height: 280px;
+  }
+
+  .chart-container-sm {
+    height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    width: 280px;
+    left: -280px;
+    height: 100vh;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+    box-shadow: 12px 0 34px rgba(0, 0, 0, 0.35);
+  }
+
+  .top-bar {
+    padding: 0.7rem;
+  }
+
+  .page-title {
+    order: 1;
+    width: calc(100% - 2.5rem);
+    font-size: 1.02rem;
+  }
+
+  #monthSelector {
+    order: 2;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  #monthSelector .btn {
+    font-size: 0.84rem;
+    padding: 0.42rem 0.55rem;
+  }
+
+  #currentMonth {
+    min-width: 0 !important;
+    flex: 1;
+    font-size: 0.9rem;
+  }
+
+  #searchWrap {
+    order: 3;
+    width: 100%;
+    max-width: unset !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  #topActions {
+    order: 4;
+    width: 100%;
+    margin-left: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem !important;
+  }
+
+  #topActions .btn,
+  #topActions .badge {
+    width: 100%;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.76rem;
+    padding: 0.35rem 0.4rem;
+  }
+
+  #userEmailTop {
+    grid-column: span 2;
+    max-width: 100%;
+  }
+
+  #userRoleTop {
+    grid-column: span 1;
+  }
+
+  #topActions .btn i {
+    margin-right: 0.2rem;
+  }
+
+  #lancamentosPageInfo {
+    min-width: 0;
+  }
+
+  .card {
+    border-radius: 18px;
+  }
+
+  .stat-card {
+    padding: 0.95rem;
+  }
+
+  .kpi-card {
+    gap: 0.65rem;
+  }
+
+  .kpi-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.28rem;
+  }
+
+  .kpi-title {
+    font-size: 0.82rem;
+  }
+
+  #kpiSaldo,
+  #kpiReceitas,
+  #kpiDespesas,
+  #kpiCartao {
+    font-size: 1.2rem;
+  }
+
+  .table-custom {
+    font-size: 0.86rem;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+
+  .modal-content {
+    border-radius: 14px;
+  }
+
+  .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .chart-container-md {
+    height: 240px;
+  }
+
+  .chart-container-sm {
+    height: 200px;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-shell {
+    padding: 0.65rem;
+  }
+
+  .auth-card {
+    border-radius: 18px;
+  }
+
+  .page-title {
+    font-size: 0.95rem;
+  }
+
+  #topActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #userEmailTop {
+    grid-column: span 2;
+  }
+
+  #userRoleTop {
+    grid-column: span 2;
+  }
+
+  .chart-container-md {
+    height: 220px;
+  }
+
+  .chart-container-sm {
+    height: 180px;
+  }
+}

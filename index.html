@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MRS Finanças</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="authView" class="auth-shell">
+    <div class="auth-card card p-4 p-md-5">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-piggy-bank fs-3"></i>
+        <h1 class="h3 m-0">MRS Finanças</h1>
+      </div>
+      <p class="text-secondary mb-4">Acesse com seu usuário para entrar no sistema.</p>
+
+      <div id="supabaseConfigAlert" class="alert alert-warning d-none" role="alert">
+        Configure <code>js/config.js</code> com sua URL e chave ANON do Supabase.
+      </div>
+
+      <form id="loginForm" class="d-grid gap-3">
+        <div>
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" id="loginEmail" required>
+        </div>
+        <div>
+          <label class="form-label">Senha</label>
+          <input type="password" class="form-control" id="loginPassword" required minlength="6">
+        </div>
+        <button class="btn btn-primary" type="submit">Entrar</button>
+      </form>
+
+      <div id="loginFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
+    </div>
+  </div>
+
+  <div id="appRoot" class="app-wrapper d-none">
+    <aside class="sidebar" id="sidebar">
+      <div class="d-flex flex-column p-3 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <span class="fs-4 fw-semibold d-flex align-items-center gap-2">
+            <i class="bi bi-piggy-bank fs-3"></i>
+            <span class="sidebar-text">MRS Finanças</span>
+          </span>
+          <i class="bi bi-chevron-left d-none d-md-block cursor-pointer" id="toggleSidebar"></i>
+          <i class="bi bi-list d-md-none cursor-pointer" id="mobileCloseBtn"></i>
+        </div>
+
+        <div class="sidebar-header-search mb-3">
+          <input type="text" class="form-control form-control-sm" placeholder="Procurar opção do menu...">
+        </div>
+
+        <nav class="nav flex-column gap-1" id="mainNav">
+          <a href="#dashboard" data-route-link="dashboard" class="nav-link nav-link-app active nav-admin-only"><i class="bi bi-speedometer2"></i><span class="sidebar-text">Dashboard</span></a>
+          <a href="#lancamentos" data-route-link="lancamentos" class="nav-link nav-link-app"><i class="bi bi-receipt"></i><span class="sidebar-text">Lançamentos</span></a>
+          <a href="#categorias" data-route-link="categorias" class="nav-link nav-link-app nav-admin-only"><i class="bi bi-tags"></i><span class="sidebar-text">Categorias</span></a>
+          <a href="#contas" data-route-link="contas" class="nav-link nav-link-app nav-admin-only"><i class="bi bi-credit-card"></i><span class="sidebar-text">Contas</span></a>
+          <a href="#usuarios" data-route-link="usuarios" class="nav-link nav-link-app nav-admin-only"><i class="bi bi-people"></i><span class="sidebar-text">Usuários</span></a>
+          <a href="#relatorios" data-route-link="relatorios" class="nav-link nav-link-app nav-admin-only"><i class="bi bi-bar-chart"></i><span class="sidebar-text">Relatórios</span></a>
+          <a href="#config" data-route-link="config" class="nav-link nav-link-app nav-admin-only"><i class="bi bi-gear"></i><span class="sidebar-text">Config</span></a>
+        </nav>
+
+        <div class="mt-auto">
+          <div class="small text-secondary sidebar-text mb-1" id="userEmailSide">-</div>
+          <div class="small text-secondary sidebar-text mb-2" id="userRoleSide">-</div>
+          <div class="small text-secondary sidebar-text">v1.2 · supabase</div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <div class="top-bar d-flex flex-wrap align-items-center gap-3">
+        <i class="bi bi-list fs-4 d-md-none cursor-pointer" id="mobileMenuBtn"></i>
+        <h6 class="m-0 fw-normal page-title" id="pageTitle">Movimento Financeiro</h6>
+
+        <div id="monthSelector" class="btn-group">
+          <button class="btn btn-outline-secondary" id="prevMonth"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn btn-outline-secondary disabled" id="currentMonth" style="min-width: 170px;">-</button>
+          <button class="btn btn-outline-secondary" id="nextMonth"><i class="bi bi-chevron-right"></i></button>
+        </div>
+
+        <div id="searchWrap" class="flex-grow-1 mx-2" style="max-width: 340px;">
+          <input type="text" class="form-control form-control-sm" id="globalSearch" placeholder="Buscar lançamento...">
+        </div>
+
+        <div class="d-flex gap-2 ms-auto align-items-center" id="topActions">
+          <button class="btn btn-primary btn-sm rounded-pill" id="btnNovoLancamento"><i class="bi bi-plus-lg"></i> Novo</button>
+          <button class="btn btn-outline-secondary btn-sm rounded-pill" id="exportCsvBtn"><i class="bi bi-download"></i> Exportar CSV</button>
+          <button class="btn btn-outline-secondary btn-sm rounded-pill" id="darkModeToggle" title="Alternar tema"><i class="bi bi-moon-stars"></i></button>
+          <button class="btn btn-outline-danger btn-sm rounded-pill" id="logoutBtn">Sair</button>
+        </div>
+      </div>
+
+      <main class="p-3 p-lg-4">
+        <section id="view-dashboard" class="app-view">
+          <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-green"><i class="bi bi-calendar-plus"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Saldo do mês</span>
+                  <h3 class="fw-bold mb-0" id="kpiSaldo">R$ 0,00</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-blue"><i class="bi bi-hand-thumbs-up"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Receitas</span>
+                  <h3 class="fw-bold mb-0" id="kpiReceitas">R$ 0,00</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-orange"><i class="bi bi-calendar-minus"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Despesas</span>
+                  <h3 class="fw-bold mb-0" id="kpiDespesas">R$ 0,00</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-red"><i class="bi bi-hand-thumbs-down"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">% Cartão / despesas</span>
+                  <h3 class="fw-bold mb-0" id="kpiCartao">0,0%</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-5">
+              <div class="card p-3">
+                <h6 class="text-secondary">Despesas por categoria</h6>
+                <div class="chart-container chart-container-md">
+                  <canvas id="chartDonut"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <div class="card p-3">
+                <h6 class="text-secondary">Evolução diária do saldo (mês)</h6>
+                <div class="chart-container chart-container-md">
+                  <canvas id="chartLinha"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-12">
+              <div class="card p-3">
+                <h6 class="text-secondary mb-2">Despesas por meio de pagamento</h6>
+                <div class="chart-container chart-container-sm">
+                  <canvas id="chartBarras"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-3">
+            <h6 class="mb-3">Últimos lançamentos</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-custom mb-0">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Meio</th>
+                    <th class="text-end">Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardTransactionsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-lancamentos" class="app-view d-none">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h5 class="m-0">Lançamentos</h5>
+              <button class="btn btn-primary btn-sm" id="btnNovoLancamentoLista"><i class="bi bi-plus-lg"></i> Novo Lançamento</button>
+            </div>
+
+            <div class="row g-2 mb-3" id="lancamentosTotals">
+              <div class="col-6 col-lg-3">
+                <div class="small text-secondary">Qtd. lançamentos</div>
+                <div class="fw-semibold" id="lancamentosTotalCount">0</div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="small text-secondary">Receitas</div>
+                <div class="fw-semibold value-positive" id="lancamentosTotalIncome">R$ 0,00</div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="small text-secondary">Despesas</div>
+                <div class="fw-semibold value-negative" id="lancamentosTotalExpense">R$ 0,00</div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="small text-secondary">Saldo</div>
+                <div class="fw-semibold" id="lancamentosTotalBalance">R$ 0,00</div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Meio</th>
+                    <th class="text-end">Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsBody"></tbody>
+              </table>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
+              <div class="d-flex align-items-center gap-2">
+                <label for="lancamentosPageSize" class="small text-secondary m-0">Por página</label>
+                <select id="lancamentosPageSize" class="form-select form-select-sm" style="width: 90px;">
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary" id="lancamentosPrevPage">Anterior</button>
+                <span id="lancamentosPageInfo" class="small text-secondary">Página 1 de 1</span>
+                <button class="btn btn-sm btn-outline-secondary" id="lancamentosNextPage">Próxima</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-categorias" class="app-view d-none">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h5 class="m-0">Categorias</h5>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="btnSeedCategories">Criar padrões</button>
+                <button class="btn btn-primary btn-sm" id="btnNovaCategoria"><i class="bi bi-plus-lg"></i> Nova Categoria</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-custom align-middle">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="categoriesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-contas" class="app-view d-none">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h5 class="m-0">Contas / Meios</h5>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="btnSeedAccounts">Criar padrões</button>
+                <button class="btn btn-primary btn-sm" id="btnNovaConta"><i class="bi bi-plus-lg"></i> Nova Conta</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-custom align-middle">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="accountsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-usuarios" class="app-view d-none">
+          <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h5 class="m-0">Usuários</h5>
+              <button class="btn btn-primary btn-sm" id="btnNovoUsuario"><i class="bi bi-plus-lg"></i> Novo Usuário</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-custom align-middle">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Perfil</th>
+                    <th>Criado em</th>
+                    <th class="text-end">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="usersBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-relatorios" class="app-view d-none">
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="card p-3">
+                <div class="small text-secondary">Lançamentos</div>
+                <div id="reportCount" class="h4 m-0">0</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card p-3">
+                <div class="small text-secondary">Receitas</div>
+                <div id="reportIncome" class="h4 m-0 value-positive">R$ 0,00</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card p-3">
+                <div class="small text-secondary">Despesas</div>
+                <div id="reportExpense" class="h4 m-0 value-negative">R$ 0,00</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card p-3">
+                <div class="small text-secondary">Saldo</div>
+                <div id="reportBalance" class="h4 m-0">R$ 0,00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card p-3 h-100">
+                <h6 class="mb-3">Despesas por categoria</h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-custom mb-0">
+                    <thead>
+                      <tr><th>Categoria</th><th class="text-end">Total</th></tr>
+                    </thead>
+                    <tbody id="reportCategoryBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card p-3 h-100">
+                <h6 class="mb-3">Despesas por meio</h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-custom mb-0">
+                    <thead>
+                      <tr><th>Meio</th><th class="text-end">Total</th></tr>
+                    </thead>
+                    <tbody id="reportAccountBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-config" class="app-view d-none">
+          <div class="card p-3">
+            <h5>Configurações</h5>
+            <p class="text-secondary mb-3">Preferências locais salvas no navegador.</p>
+            <div class="d-flex flex-column gap-2">
+              <button class="btn btn-outline-secondary w-auto" id="btnToggleThemeConfig">Alternar tema</button>
+              <button class="btn btn-outline-danger w-auto" id="btnClearLocalData">Limpar preferências locais</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--card-bg);">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="transactionModalTitle">Novo lançamento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formLancamento" class="d-grid gap-2">
+            <input type="hidden" id="transactionId">
+            <div>
+              <label class="form-label">Data *</label>
+              <input type="date" class="form-control" id="campoData" required>
+            </div>
+            <div>
+              <label class="form-label">Tipo *</label>
+              <select class="form-select" id="campoTipo" required>
+                <option value="receita">Receita</option>
+                <option value="despesa" selected>Despesa</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Valor (R$) *</label>
+              <input type="number" class="form-control" id="campoValor" min="0.01" step="0.01" required>
+            </div>
+            <div>
+              <label class="form-label">Descrição *</label>
+              <input type="text" class="form-control" id="campoDescricao" required>
+            </div>
+            <div>
+              <label class="form-label">Categoria</label>
+              <select class="form-select" id="campoCategoria"></select>
+            </div>
+            <div>
+              <label class="form-label">Meio / Conta</label>
+              <select class="form-select" id="campoConta"></select>
+            </div>
+            <div>
+              <label class="form-label">Observação</label>
+              <textarea id="campoObs" class="form-control" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" id="salvarLancamentoBtn">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--card-bg);">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="categoryModalTitle">Nova categoria</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="categoryId">
+          <label class="form-label">Nome da categoria *</label>
+          <input type="text" class="form-control" id="categoryName" required>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" id="salvarCategoriaBtn">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="accountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--card-bg);">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="accountModalTitle">Nova conta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="accountId">
+          <div class="mb-2">
+            <label class="form-label">Nome *</label>
+            <input type="text" class="form-control" id="accountName" required>
+          </div>
+          <div>
+            <label class="form-label">Tipo *</label>
+            <select id="accountKind" class="form-select" required>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="pix">Pix</option>
+              <option value="debito">Débito</option>
+              <option value="cartao">Cartão</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" id="salvarContaBtn">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="background: var(--card-bg);">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="userModalTitle">Novo usuário</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="appUserId">
+          <div class="mb-2">
+            <label class="form-label">Email *</label>
+            <input type="email" class="form-control" id="appUserEmail" required>
+          </div>
+          <div class="mb-2" id="appUserPasswordWrap">
+            <label class="form-label">Senha *</label>
+            <input type="password" class="form-control" id="appUserPassword" minlength="6">
+          </div>
+          <div>
+            <label class="form-label">Perfil *</label>
+            <select class="form-select" id="appUserRole" required>
+              <option value="administrativo">Administrativo</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" id="salvarUsuarioBtn">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Optional runtime config (useful for GitHub Pages).
+    // window.__APP_CONFIG__ = {
+    //   supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
+    //   supabaseAnonKey: 'YOUR_SUPABASE_ANON_KEY',
+    // };
+    window.__APP_CONFIG__ = window.__APP_CONFIG__ || {};
+  </script>
+  <script>
+    window.__APP_BOOTED__ = false;
+    window.__LOGIN_BOUND__ = false;
+    document.getElementById('loginForm')?.addEventListener('submit', function(event) {
+      if (!window.__APP_BOOTED__ || !window.__LOGIN_BOUND__) {
+        event.preventDefault();
+        const feedback = document.getElementById('loginFeedback');
+        if (feedback) {
+          feedback.className = 'alert alert-danger mt-3 mb-0';
+          feedback.textContent = 'O script principal não carregou. Use um servidor HTTP (Live Server/GitHub Pages) e verifique o Console (F12).';
+        }
+      }
+    });
+  </script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
