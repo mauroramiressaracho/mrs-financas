@@ -370,7 +370,7 @@ function updatePageTitle(route) {
 function onRouteChange(route) {
   state.route = route;
 
-  if (!isAdmin() && adminOnlyRoutes.has(route)) {
+  if (state.user && !isAdmin() && adminOnlyRoutes.has(route)) {
     navigate('lancamentos');
     return;
   }
@@ -740,9 +740,7 @@ async function processUser(user) {
     setMonthLabel();
     applyRoleUi();
 
-    if (!isAdmin()) {
-      navigate('lancamentos');
-    }
+    navigate(isAdmin() ? 'dashboard' : 'lancamentos');
 
     await loadAppData();
   } catch (error) {
