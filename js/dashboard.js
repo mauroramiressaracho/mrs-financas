@@ -25,6 +25,10 @@ export function createDashboard() {
   const kpiReceitas = document.getElementById('kpiReceitas');
   const kpiDespesas = document.getElementById('kpiDespesas');
   const kpiCartao = document.getElementById('kpiCartao');
+  const kpiPaidCount = document.getElementById('kpiPaidCount');
+  const kpiPaidAmount = document.getElementById('kpiPaidAmount');
+  const kpiPendingCount = document.getElementById('kpiPendingCount');
+  const kpiPendingAmount = document.getElementById('kpiPendingAmount');
 
   const donutCtx = document.getElementById('chartDonut');
   const lineCtx = document.getElementById('chartLinha');
@@ -177,11 +181,19 @@ export function createDashboard() {
     const saldo = receitas - despesas;
 
     const percDespesasReceitas = receitas > 0 ? ((despesas / receitas) * 100).toFixed(1) : '0.0';
+    const paidRows = transactions.filter((item) => item.status === 'pago');
+    const pendingRows = transactions.filter((item) => item.status !== 'pago');
+    const paidAmount = paidRows.reduce((sum, item) => sum + item.amount, 0);
+    const pendingAmount = pendingRows.reduce((sum, item) => sum + item.amount, 0);
 
     kpiSaldo.textContent = toMoney(saldo);
     kpiReceitas.textContent = toMoney(receitas);
     kpiDespesas.textContent = toMoney(despesas);
     kpiCartao.textContent = `${percDespesasReceitas}%`;
+    if (kpiPaidCount) kpiPaidCount.textContent = String(paidRows.length);
+    if (kpiPaidAmount) kpiPaidAmount.textContent = toMoney(paidAmount);
+    if (kpiPendingCount) kpiPendingCount.textContent = String(pendingRows.length);
+    if (kpiPendingAmount) kpiPendingAmount.textContent = toMoney(pendingAmount);
 
     kpiSaldo.className = `fw-bold mb-0 ${saldo >= 0 ? 'value-positive' : 'value-negative'}`;
     kpiReceitas.className = 'fw-bold mb-0 value-positive';

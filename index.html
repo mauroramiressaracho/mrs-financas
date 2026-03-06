@@ -133,6 +133,45 @@
           </div>
 
           <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-blue"><i class="bi bi-check2-circle"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Pagos (qtd)</span>
+                  <h3 class="fw-bold mb-0" id="kpiPaidCount">0</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-green"><i class="bi bi-cash-stack"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Pagos (valor)</span>
+                  <h3 class="fw-bold mb-0" id="kpiPaidAmount">R$ 0,00</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-orange"><i class="bi bi-hourglass-split"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Pendentes (qtd)</span>
+                  <h3 class="fw-bold mb-0" id="kpiPendingCount">0</h3>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="card stat-card kpi-card">
+                <div class="kpi-icon kpi-icon-red"><i class="bi bi-wallet2"></i></div>
+                <div class="kpi-content">
+                  <span class="kpi-title">Pendentes (valor)</span>
+                  <h3 class="fw-bold mb-0" id="kpiPendingAmount">R$ 0,00</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
             <div class="col-md-5">
               <div class="card p-3">
                 <h6 class="text-secondary">Despesas por categoria</h6>
@@ -181,6 +220,7 @@
                   <tr>
                     <th>Data</th>
                     <th>Tipo</th>
+                    <th>Status</th>
                     <th>Descrição</th>
                     <th>Categoria</th>
                     <th>Meio</th>
@@ -238,6 +278,14 @@
                 </select>
               </div>
               <div class="col-6 col-xl-2">
+                <label for="lancFilterStatus" class="form-label form-label-sm small text-secondary mb-1">Status</label>
+                <select id="lancFilterStatus" class="form-select form-select-sm">
+                  <option value="">Todos</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="pago">Pago</option>
+                </select>
+              </div>
+              <div class="col-6 col-xl-2">
                 <label for="lancFilterCategory" class="form-label form-label-sm small text-secondary mb-1">Categoria</label>
                 <select id="lancFilterCategory" class="form-select form-select-sm"></select>
               </div>
@@ -249,7 +297,8 @@
                 <label for="lancFilterDesc" class="form-label form-label-sm small text-secondary mb-1">Descrição</label>
                 <input type="text" id="lancFilterDesc" class="form-control form-control-sm" placeholder="Filtrar descrição">
               </div>
-              <div class="col-12 d-flex justify-content-end gap-2">
+              <div class="col-12 d-flex justify-content-end flex-wrap gap-2">
+                <button class="btn btn-outline-success btn-sm" id="lancMarkPendingPaidBtn"><i class="bi bi-check2-square"></i> Marcar pendentes como pagos</button>
                 <button class="btn btn-outline-secondary btn-sm" id="lancFilterClear"><i class="bi bi-x-circle"></i> Limpar filtros</button>
                 <button class="btn btn-outline-secondary btn-sm" id="lancExportBtn"><i class="bi bi-download"></i> Exportar CSV</button>
               </div>
@@ -261,6 +310,7 @@
                   <tr>
                     <th>Data</th>
                     <th>Tipo</th>
+                    <th>Status</th>
                     <th>Descrição</th>
                     <th>Categoria</th>
                     <th>Meio</th>
@@ -360,6 +410,22 @@
         </section>
 
         <section id="view-relatorios" class="app-view d-none">
+          <div class="card p-3 mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-4 col-lg-3">
+                <label for="reportFilterStatus" class="form-label form-label-sm small text-secondary mb-1">Status</label>
+                <select id="reportFilterStatus" class="form-select form-select-sm">
+                  <option value="">Todos</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="pago">Pago</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-auto">
+                <button class="btn btn-outline-secondary btn-sm" id="reportFilterClear"><i class="bi bi-x-circle"></i> Limpar filtro</button>
+              </div>
+            </div>
+          </div>
+
           <div class="row g-3 mb-3">
             <div class="col-6 col-md-3">
               <div class="card p-3">
@@ -450,6 +516,13 @@
               <select class="form-select" id="campoTipo" required>
                 <option value="receita">Receita</option>
                 <option value="despesa" selected>Despesa</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Status *</label>
+              <select class="form-select" id="campoStatus" required>
+                <option value="pendente" selected>Pendente</option>
+                <option value="pago">Pago</option>
               </select>
             </div>
             <div>

@@ -19,6 +19,7 @@ import {
   updateAccount,
   updateCategory,
   updateTransaction,
+  updateTransactionsStatus,
   updateUserRole,
 } from './api.js';
 import { createDashboard } from './dashboard.js';
@@ -49,9 +50,14 @@ const DEFAULT_LANCAMENTOS_FILTERS = Object.freeze({
   dateFrom: '',
   dateTo: '',
   type: '',
+  status: '',
   description: '',
   categoryId: '',
   accountId: '',
+});
+
+const DEFAULT_REPORT_FILTERS = Object.freeze({
+  status: '',
 });
 
 const state = {
@@ -69,6 +75,7 @@ const state = {
   transactionsYear: [],
   users: [],
   lancamentosFilters: { ...DEFAULT_LANCAMENTOS_FILTERS },
+  reportFilters: { ...DEFAULT_REPORT_FILTERS },
 };
 
 const dashboard = createDashboard();
@@ -206,6 +213,7 @@ function currentFilteredTransactions() {
         || item.category_name.toLowerCase().includes(token)
         || item.account_name.toLowerCase().includes(token)
         || item.type.toLowerCase().includes(token)
+        || (item.status || 'pendente').toLowerCase().includes(token)
     );
   }
 
@@ -224,6 +232,10 @@ function currentFilteredTransactions() {
       rows = rows.filter((item) => item.type === f.type);
     }
 
+    if (f.status) {
+      rows = rows.filter((item) => (item.status || 'pendente') === f.status);
+    }
+
     if (f.description) {
       const descriptionToken = f.description.toLowerCase();
       rows = rows.filter((item) => item.description.toLowerCase().includes(descriptionToken));
@@ -238,6 +250,10 @@ function currentFilteredTransactions() {
     }
   }
 
+  if (state.route === 'relatorios' && state.reportFilters.status) {
+    rows = rows.filter((item) => (item.status || 'pendente') === state.reportFilters.status);
+  }
+
   return rows;
 }
 
@@ -246,6 +262,7 @@ function syncLancamentosFiltersFromUi() {
     dateFrom: document.getElementById('lancFilterDateFrom')?.value || '',
     dateTo: document.getElementById('lancFilterDateTo')?.value || '',
     type: document.getElementById('lancFilterType')?.value || '',
+    status: document.getElementById('lancFilterStatus')?.value || '',
     description: document.getElementById('lancFilterDesc')?.value.trim() || '',
     categoryId: document.getElementById('lancFilterCategory')?.value || '',
     accountId: document.getElementById('lancFilterAccount')?.value || '',
@@ -257,6 +274,7 @@ function applyLancamentosFiltersToUi() {
   const from = document.getElementById('lancFilterDateFrom');
   const to = document.getElementById('lancFilterDateTo');
   const type = document.getElementById('lancFilterType');
+  const status = document.getElementById('lancFilterStatus');
   const desc = document.getElementById('lancFilterDesc');
   const category = document.getElementById('lancFilterCategory');
   const account = document.getElementById('lancFilterAccount');
@@ -264,9 +282,21 @@ function applyLancamentosFiltersToUi() {
   if (from) from.value = f.dateFrom;
   if (to) to.value = f.dateTo;
   if (type) type.value = f.type;
+  if (status) status.value = f.status;
   if (desc) desc.value = f.description;
   if (category) category.value = f.categoryId;
   if (account) account.value = f.accountId;
+}
+
+function syncReportFiltersFromUi() {
+  state.reportFilters = {
+    status: document.getElementById('reportFilterStatus')?.value || '',
+  };
+}
+
+function applyReportFiltersToUi() {
+  const status = document.getElementById('reportFilterStatus');
+  if (status) status.value = state.reportFilters.status;
 }
 
 function refreshLancamentosFilterSelects() {
@@ -494,6 +524,7 @@ function openTransactionModal(transactionId = null) {
     document.getElementById('transactionId').value = tx.id;
     document.getElementById('campoData').value = tx.dt;
     document.getElementById('campoTipo').value = tx.type;
+    document.getElementById('campoStatus').value = tx.status || 'pendente';
     document.getElementById('campoValor').value = String(tx.amount);
     document.getElementById('campoDescricao').value = tx.description;
     document.getElementById('campoCategoria').value = tx.category_id || '';
@@ -504,6 +535,7 @@ function openTransactionModal(transactionId = null) {
     document.getElementById('formLancamento').reset();
     document.getElementById('transactionId').value = '';
     document.getElementById('campoTipo').value = 'despesa';
+    document.getElementById('campoStatus').value = 'pendente';
     document.getElementById('campoData').valueAsDate = new Date();
   }
 
@@ -564,6 +596,7 @@ function openUserModal(userId = null) {
 function parseTransactionForm() {
   const dt = document.getElementById('campoData').value;
   const type = document.getElementById('campoTipo').value;
+  const status = document.getElementById('campoStatus').value;
   const amount = Number(document.getElementById('campoValor').value);
   const description = document.getElementById('campoDescricao').value.trim();
   const categoryId = document.getElementById('campoCategoria').value;
@@ -572,12 +605,14 @@ function parseTransactionForm() {
 
   if (!dt) throw new Error('Informe a data.');
   if (!['receita', 'despesa'].includes(type)) throw new Error('Tipo inválido.');
+  if (!['pendente', 'pago'].includes(status)) throw new Error('Status inválido.');
   if (!amount || amount <= 0) throw new Error('Valor precisa ser maior que zero.');
   if (!description) throw new Error('Descrição é obrigatória.');
 
   return {
     dt,
     type,
+    status,
     amount: Number(amount.toFixed(2)),
     description,
     category_id: categoryId || null,
@@ -622,6 +657,55 @@ async function removeTransaction(transactionId) {
     await refreshTransactions();
   } catch (error) {
     showToast(error.message || 'Erro ao excluir lançamento.', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function markTransactionPaid(transactionId) {
+  if (!state.user) return;
+
+  const row = state.transactions.find((item) => item.id === transactionId);
+  if (!row) return;
+  if ((row.status || 'pendente') === 'pago') {
+    showToast('Este lançamento já está como pago.');
+    return;
+  }
+
+  try {
+    setLoading(true);
+    await updateTransactionsStatus([transactionId], 'pago');
+    showToast('Lançamento marcado como pago.');
+    await refreshTransactions();
+  } catch (error) {
+    showToast(error.message || 'Erro ao atualizar status do lançamento.', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function markFilteredPendingsAsPaid() {
+  if (!state.user) return;
+
+  const ids = currentFilteredTransactions()
+    .filter((item) => (item.status || 'pendente') === 'pendente')
+    .map((item) => item.id);
+
+  if (ids.length === 0) {
+    showToast('Nenhum lançamento pendente para atualizar.');
+    return;
+  }
+
+  const question = `Marcar ${ids.length} lançamento(s) pendente(s) como pago?`;
+  if (!window.confirm(question)) return;
+
+  try {
+    setLoading(true);
+    await updateTransactionsStatus(ids, 'pago');
+    showToast(`${ids.length} lançamento(s) atualizado(s) para pago.`);
+    await refreshTransactions();
+  } catch (error) {
+    showToast(error.message || 'Erro ao atualizar pendentes.', 'error');
   } finally {
     setLoading(false);
   }
@@ -788,10 +872,11 @@ function exportCurrentCsv() {
 
   downloadCsv(
     `lancamentos-${state.monthKey}.csv`,
-    ['Data', 'Tipo', 'Descricao', 'Categoria', 'Meio', 'Valor', 'Observacao', 'Usuario'],
+    ['Data', 'Tipo', 'Status', 'Descricao', 'Categoria', 'Meio', 'Valor', 'Observacao', 'Usuario'],
     rows.map((item) => [
       formatDate(item.dt),
       item.type === 'receita' ? 'Receita' : 'Despesa',
+      (item.status || 'pendente') === 'pago' ? 'Pago' : 'Pendente',
       item.description,
       item.category_name,
       item.account_name,
@@ -815,6 +900,8 @@ async function processUser(user) {
     state.transactionsYear = [];
     state.users = [];
     state.currentPage = 1;
+    state.lancamentosFilters = { ...DEFAULT_LANCAMENTOS_FILTERS };
+    state.reportFilters = { ...DEFAULT_REPORT_FILTERS };
     setUserIdentity('-', '-');
     setAuthVisible(true);
     setLoginSubmitting(false);
@@ -925,6 +1012,7 @@ function bindUiEvents() {
   document.getElementById('lancFilterDateFrom').addEventListener('change', lancFilterChange);
   document.getElementById('lancFilterDateTo').addEventListener('change', lancFilterChange);
   document.getElementById('lancFilterType').addEventListener('change', lancFilterChange);
+  document.getElementById('lancFilterStatus').addEventListener('change', lancFilterChange);
   document.getElementById('lancFilterCategory').addEventListener('change', lancFilterChange);
   document.getElementById('lancFilterAccount').addEventListener('change', lancFilterChange);
   document.getElementById('lancFilterDesc').addEventListener('input', lancFilterChange);
@@ -934,7 +1022,19 @@ function bindUiEvents() {
     state.currentPage = 1;
     refreshViewData();
   });
+  document.getElementById('lancMarkPendingPaidBtn').addEventListener('click', markFilteredPendingsAsPaid);
   document.getElementById('lancExportBtn').addEventListener('click', exportCurrentCsv);
+
+  const reportFilterChange = () => {
+    syncReportFiltersFromUi();
+    refreshViewData();
+  };
+  document.getElementById('reportFilterStatus').addEventListener('change', reportFilterChange);
+  document.getElementById('reportFilterClear').addEventListener('click', () => {
+    state.reportFilters = { ...DEFAULT_REPORT_FILTERS };
+    applyReportFiltersToUi();
+    refreshViewData();
+  });
 
   document.getElementById('btnNovoLancamento').addEventListener('click', () => openTransactionModal());
   document.getElementById('btnNovoLancamentoLista').addEventListener('click', () => openTransactionModal());
@@ -979,6 +1079,7 @@ function bindUiEvents() {
     if (!btn) return;
 
     const { action, id } = btn.dataset;
+    if (action === 'mark-transaction-paid') markTransactionPaid(id);
     if (action === 'edit-transaction') openTransactionModal(id);
     if (action === 'delete-transaction') removeTransaction(id);
   });
@@ -988,6 +1089,7 @@ function bindUiEvents() {
     if (!btn) return;
 
     const { action, id } = btn.dataset;
+    if (action === 'mark-transaction-paid') markTransactionPaid(id);
     if (action === 'edit-transaction') openTransactionModal(id);
     if (action === 'delete-transaction') removeTransaction(id);
   });
@@ -1022,6 +1124,8 @@ function bindUiEvents() {
 async function boot() {
   bindUiEvents();
   bindAuthEvents();
+  applyLancamentosFiltersToUi();
+  applyReportFiltersToUi();
   setLoginFeedback('');
   setLoginSubmitting(false);
   setMonthLabel();

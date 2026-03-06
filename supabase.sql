@@ -33,6 +33,7 @@ create table if not exists public.transactions (
   user_id uuid not null references auth.users(id) on delete cascade,
   dt date not null,
   type text not null check (type in ('receita', 'despesa')),
+  status text not null default 'pendente' check (status in ('pendente', 'pago')),
   amount numeric(14,2) not null check (amount > 0),
   description text not null,
   category_id uuid null references public.categories(id) on delete set null,
@@ -41,12 +42,33 @@ create table if not exists public.transactions (
   created_at timestamptz not null default now()
 );
 
+alter table public.transactions add column if not exists status text;
+update public.transactions set status = 'pendente' where status is null;
+alter table public.transactions alter column status set default 'pendente';
+alter table public.transactions alter column status set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'transactions_status_check'
+      and conrelid = 'public.transactions'::regclass
+  ) then
+    alter table public.transactions
+      add constraint transactions_status_check
+      check (status in ('pendente', 'pago'));
+  end if;
+end
+$$;
+
 create index if not exists idx_profiles_role on public.profiles(role);
 create index if not exists idx_accounts_user_id on public.accounts(user_id);
 create index if not exists idx_categories_user_id on public.categories(user_id);
 create index if not exists idx_transactions_user_id on public.transactions(user_id);
 create index if not exists idx_transactions_dt on public.transactions(dt);
 create index if not exists idx_transactions_user_dt on public.transactions(user_id, dt);
+create index if not exists idx_transactions_status on public.transactions(status);
 
 create or replace function public.current_app_role()
 returns text

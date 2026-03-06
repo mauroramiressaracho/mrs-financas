@@ -59,6 +59,7 @@ function mapTransactionRows(data) {
       user_id: row.user_id,
       dt: row.dt,
       type: row.type,
+      status: row.status || 'pendente',
       amount: Number(row.amount ?? 0),
       description: row.description,
       note: row.note ?? '',
@@ -75,7 +76,7 @@ async function listTransactionsBetween(start, end) {
   ensureClient();
   const { data, error } = await supabase
     .from('transactions')
-    .select('id,user_id,dt,type,amount,description,note,category_id,account_id,categories(name),accounts(name,kind)')
+    .select('id,user_id,dt,type,status,amount,description,note,category_id,account_id,categories(name),accounts(name,kind)')
     .gte('dt', start)
     .lte('dt', end)
     .order('dt', { ascending: true })
@@ -275,6 +276,7 @@ export async function createTransaction(userId, payload) {
       user_id: userId,
       dt: payload.dt,
       type: payload.type,
+      status: payload.status || 'pendente',
       amount: payload.amount,
       description: payload.description,
       category_id: payload.category_id || null,
@@ -295,6 +297,7 @@ export async function updateTransaction(id, payload) {
     .update({
       dt: payload.dt,
       type: payload.type,
+      status: payload.status || 'pendente',
       amount: payload.amount,
       description: payload.description,
       category_id: payload.category_id || null,
@@ -307,6 +310,20 @@ export async function updateTransaction(id, payload) {
 
   if (error) throw error;
   return data;
+}
+
+export async function updateTransactionsStatus(ids, status) {
+  ensureClient();
+
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  if (!['pendente', 'pago'].includes(status)) throw new Error('Status inválido.');
+
+  const { error } = await supabase
+    .from('transactions')
+    .update({ status })
+    .in('id', ids);
+
+  if (error) throw error;
 }
 
 export async function deleteTransaction(id) {

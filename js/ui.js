@@ -217,7 +217,7 @@ export function renderTransactionsTable(targetBodyId, rows, withActions = true) 
   if (!body) return;
 
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="7" class="text-secondary">Nenhum lançamento encontrado.</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" class="text-secondary">Nenhum lançamento encontrado.</td></tr>';
     return;
   }
 
@@ -226,10 +226,18 @@ export function renderTransactionsTable(targetBodyId, rows, withActions = true) 
       const typeBadge = row.type === 'receita'
         ? '<span class="badge badge-income">Receita</span>'
         : '<span class="badge badge-expense">Despesa</span>';
+      const status = row.status === 'pago' ? 'pago' : 'pendente';
+      const statusBadge = status === 'pago'
+        ? '<span class="badge badge-status-paid">Pago</span>'
+        : '<span class="badge badge-status-pending">Pendente</span>';
+      const markPaidButton = status === 'pendente'
+        ? `<button class="btn btn-sm btn-outline-success" data-action="mark-transaction-paid" data-id="${row.id}"><i class="bi bi-check2"></i></button>`
+        : '';
 
       const valueClass = row.type === 'receita' ? 'value-positive' : 'value-negative';
       const actions = withActions
         ? `
+          ${markPaidButton}
           <button class="btn btn-sm btn-outline-secondary" data-action="edit-transaction" data-id="${row.id}"><i class="bi bi-pencil"></i></button>
           <button class="btn btn-sm btn-outline-danger" data-action="delete-transaction" data-id="${row.id}"><i class="bi bi-trash"></i></button>
         `
@@ -239,6 +247,7 @@ export function renderTransactionsTable(targetBodyId, rows, withActions = true) 
         <tr>
           <td>${formatDate(row.dt)}</td>
           <td>${typeBadge}</td>
+          <td>${statusBadge}</td>
           <td>${escapeHtml(row.description)}</td>
           <td>${escapeHtml(row.category_name || 'Sem categoria')}</td>
           <td>${escapeHtml(row.account_name || 'Sem conta')}</td>

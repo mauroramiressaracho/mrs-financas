@@ -375,7 +375,11 @@ body.dark .auth-shell {
 #kpiSaldo,
 #kpiReceitas,
 #kpiDespesas,
-#kpiCartao {
+#kpiCartao,
+#kpiPaidCount,
+#kpiPaidAmount,
+#kpiPendingCount,
+#kpiPendingAmount {
   font-size: 2rem;
   line-height: 1.05;
   font-weight: 500 !important;
@@ -413,6 +417,22 @@ body.dark .auth-shell {
   background: color-mix(in srgb, var(--expense) 15%, transparent);
   color: var(--expense);
   font-weight: 600;
+}
+
+.badge-status-paid {
+  background: color-mix(in srgb, var(--income) 20%, transparent);
+  color: var(--income);
+  font-weight: 600;
+}
+
+.badge-status-pending {
+  background: color-mix(in srgb, #f59e0b 25%, transparent);
+  color: #b45309;
+  font-weight: 600;
+}
+
+body.dark .badge-status-pending {
+  color: #fcd34d;
 }
 
 .chart-container {
@@ -502,7 +522,11 @@ body.dark .auth-shell {
   #kpiSaldo,
   #kpiReceitas,
   #kpiDespesas,
-  #kpiCartao {
+  #kpiCartao,
+  #kpiPaidCount,
+  #kpiPaidAmount,
+  #kpiPendingCount,
+  #kpiPendingAmount {
     font-size: 1.55rem;
   }
 
@@ -634,7 +658,11 @@ body.dark .auth-shell {
   #kpiSaldo,
   #kpiReceitas,
   #kpiDespesas,
-  #kpiCartao {
+  #kpiCartao,
+  #kpiPaidCount,
+  #kpiPaidAmount,
+  #kpiPendingCount,
+  #kpiPendingAmount {
     font-size: 1.2rem;
   }
 
