@@ -93,6 +93,42 @@
 
       <main class="p-3 p-lg-4">
         <section id="view-dashboard" class="app-view">
+          <div class="card p-3 mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-6 col-xl-2">
+                <label for="dashFilterDateFrom" class="form-label form-label-sm small text-secondary mb-1">Data inicial</label>
+                <input type="date" id="dashFilterDateFrom" class="form-control form-control-sm">
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="dashFilterDateTo" class="form-label form-label-sm small text-secondary mb-1">Data final</label>
+                <input type="date" id="dashFilterDateTo" class="form-control form-control-sm">
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="dashFilterType" class="form-label form-label-sm small text-secondary mb-1">Tipo</label>
+                <select id="dashFilterType" class="form-select form-select-sm">
+                  <option value="">Todos</option>
+                  <option value="receita">Receita</option>
+                  <option value="despesa">Despesa</option>
+                </select>
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="dashFilterStatus" class="form-label form-label-sm small text-secondary mb-1">Status</label>
+                <select id="dashFilterStatus" class="form-select form-select-sm">
+                  <option value="">Todos</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="pago">Pago</option>
+                </select>
+              </div>
+              <div class="col-6 col-xl-2">
+                <label for="dashFilterDesc" class="form-label form-label-sm small text-secondary mb-1">Descrição</label>
+                <input type="text" id="dashFilterDesc" class="form-control form-control-sm" placeholder="Filtrar descrição">
+              </div>
+              <div class="col-12 col-xl-2 d-flex justify-content-xl-end">
+                <button class="btn btn-outline-secondary btn-sm w-100" id="dashFilterClear"><i class="bi bi-x-circle"></i> Limpar filtros</button>
+              </div>
+            </div>
+          </div>
+
           <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
               <div class="card stat-card kpi-card">

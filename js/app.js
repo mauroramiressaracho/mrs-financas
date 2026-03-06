@@ -56,6 +56,14 @@ const DEFAULT_LANCAMENTOS_FILTERS = Object.freeze({
   accountId: '',
 });
 
+const DEFAULT_DASHBOARD_FILTERS = Object.freeze({
+  dateFrom: '',
+  dateTo: '',
+  type: '',
+  status: '',
+  description: '',
+});
+
 const DEFAULT_REPORT_FILTERS = Object.freeze({
   status: '',
 });
@@ -75,6 +83,7 @@ const state = {
   transactionsYear: [],
   users: [],
   lancamentosFilters: { ...DEFAULT_LANCAMENTOS_FILTERS },
+  dashboardFilters: { ...DEFAULT_DASHBOARD_FILTERS },
   reportFilters: { ...DEFAULT_REPORT_FILTERS },
 };
 
@@ -85,7 +94,7 @@ const accountModal = new bootstrap.Modal(document.getElementById('accountModal')
 const userModal = new bootstrap.Modal(document.getElementById('userModal'));
 
 const monthRoutes = new Set(['dashboard', 'lancamentos', 'relatorios']);
-const searchRoutes = new Set(['dashboard']);
+const searchRoutes = new Set(['lancamentos']);
 const newTxRoutes = new Set(['dashboard', 'lancamentos']);
 const exportRoutes = new Set(['dashboard', 'lancamentos', 'relatorios']);
 const adminOnlyRoutes = new Set(['dashboard', 'categorias', 'contas', 'usuarios', 'relatorios', 'config']);
@@ -257,6 +266,59 @@ function currentFilteredTransactions() {
   return rows;
 }
 
+function syncDashboardFiltersFromUi() {
+  state.dashboardFilters = {
+    dateFrom: document.getElementById('dashFilterDateFrom')?.value || '',
+    dateTo: document.getElementById('dashFilterDateTo')?.value || '',
+    type: document.getElementById('dashFilterType')?.value || '',
+    status: document.getElementById('dashFilterStatus')?.value || '',
+    description: document.getElementById('dashFilterDesc')?.value.trim() || '',
+  };
+}
+
+function applyDashboardFiltersToUi() {
+  const f = state.dashboardFilters;
+  const dateFrom = document.getElementById('dashFilterDateFrom');
+  const dateTo = document.getElementById('dashFilterDateTo');
+  const type = document.getElementById('dashFilterType');
+  const status = document.getElementById('dashFilterStatus');
+  const description = document.getElementById('dashFilterDesc');
+
+  if (dateFrom) dateFrom.value = f.dateFrom;
+  if (dateTo) dateTo.value = f.dateTo;
+  if (type) type.value = f.type;
+  if (status) status.value = f.status;
+  if (description) description.value = f.description;
+}
+
+function currentDashboardFilteredTransactions() {
+  const f = state.dashboardFilters;
+  let rows = [...state.transactions];
+
+  if (f.dateFrom) {
+    rows = rows.filter((item) => item.dt >= f.dateFrom);
+  }
+
+  if (f.dateTo) {
+    rows = rows.filter((item) => item.dt <= f.dateTo);
+  }
+
+  if (f.type) {
+    rows = rows.filter((item) => item.type === f.type);
+  }
+
+  if (f.status) {
+    rows = rows.filter((item) => (item.status || 'pendente') === f.status);
+  }
+
+  if (f.description) {
+    const token = f.description.toLowerCase();
+    rows = rows.filter((item) => item.description.toLowerCase().includes(token));
+  }
+
+  return rows;
+}
+
 function syncLancamentosFiltersFromUi() {
   state.lancamentosFilters = {
     dateFrom: document.getElementById('lancFilterDateFrom')?.value || '',
@@ -392,17 +454,19 @@ function updateLancamentosPaginationUi(meta) {
 }
 
 function refreshViewData() {
-  const filtered = currentFilteredTransactions();
-  const sortedDesc = sortByDateDesc(filtered);
+  const listAndReportRows = currentFilteredTransactions();
+  const sortedDesc = sortByDateDesc(listAndReportRows);
+  const dashboardRows = currentDashboardFilteredTransactions();
+  const dashboardSortedDesc = sortByDateDesc(dashboardRows);
 
   const pagination = paginateTransactions(sortedDesc);
 
   renderTransactionsTable('transactionsBody', pagination.pageRows, true);
-  renderTransactionsTable('dashboardTransactionsBody', sortedDesc.slice(0, 10), true);
+  renderTransactionsTable('dashboardTransactionsBody', dashboardSortedDesc.slice(0, 10), true);
   updateLancamentosTotals(sortedDesc);
   updateLancamentosPaginationUi(pagination);
-  dashboard.render(filtered, state.monthKey, state.transactionsYear);
-  updateReports(filtered);
+  dashboard.render(dashboardRows, state.monthKey, state.transactionsYear);
+  updateReports(listAndReportRows);
 }
 
 function refreshLookupSelects() {
@@ -901,6 +965,7 @@ async function processUser(user) {
     state.users = [];
     state.currentPage = 1;
     state.lancamentosFilters = { ...DEFAULT_LANCAMENTOS_FILTERS };
+    state.dashboardFilters = { ...DEFAULT_DASHBOARD_FILTERS };
     state.reportFilters = { ...DEFAULT_REPORT_FILTERS };
     setUserIdentity('-', '-');
     setAuthVisible(true);
@@ -1000,6 +1065,22 @@ function bindUiEvents() {
 
   document.getElementById('lancamentosNextPage').addEventListener('click', () => {
     state.currentPage += 1;
+    refreshViewData();
+  });
+
+  const dashFilterChange = () => {
+    syncDashboardFiltersFromUi();
+    refreshViewData();
+  };
+
+  document.getElementById('dashFilterDateFrom').addEventListener('change', dashFilterChange);
+  document.getElementById('dashFilterDateTo').addEventListener('change', dashFilterChange);
+  document.getElementById('dashFilterType').addEventListener('change', dashFilterChange);
+  document.getElementById('dashFilterStatus').addEventListener('change', dashFilterChange);
+  document.getElementById('dashFilterDesc').addEventListener('input', dashFilterChange);
+  document.getElementById('dashFilterClear').addEventListener('click', () => {
+    state.dashboardFilters = { ...DEFAULT_DASHBOARD_FILTERS };
+    applyDashboardFiltersToUi();
     refreshViewData();
   });
 
@@ -1124,6 +1205,7 @@ function bindUiEvents() {
 async function boot() {
   bindUiEvents();
   bindAuthEvents();
+  applyDashboardFiltersToUi();
   applyLancamentosFiltersToUi();
   applyReportFiltersToUi();
   setLoginFeedback('');
